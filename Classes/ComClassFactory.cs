@@ -36,17 +36,12 @@ namespace ComActivator.Classes
             //We know the type being requested, because we have rclsid.
             //We have to look in the registry to figure out what the codebase
             //is (you *did* register your COM with the /codebase option, right? :)
-            using (RegistryKey key = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Default))
-            using (RegistryKey codeBaseKey = key.OpenSubKey(@"CLSID\" + rclsid.ToString("B") + @"\InProcServer32"))
-            {
-                _CodeBase = codeBaseKey.GetValue("CodeBase").ToString();
-                _ClassName = codeBaseKey.GetValue("Class").ToString();
-                var codeBaseUri = new Uri(_CodeBase).LocalPath;
-                loadedAssm = Assembly.LoadFile(codeBaseUri);
-                _BasePath = Directory.GetParent(codeBaseUri).FullName;
-                LoadReferencedAssemblies(AppDomain.CurrentDomain, loadedAssm);
-                _ComClass = loadedAssm.GetType(_ClassName);
-            }
+
+            ComInfo comInfo = ComInfo.GetComInfoFromClsid(rclsid);
+            loadedAssm = Assembly.LoadFile(comInfo.CodeBaseLocal);
+            _BasePath = Directory.GetParent(comInfo.CodeBaseLocal).FullName;
+            //LoadReferencedAssemblies(AppDomain.CurrentDomain, loadedAssm);
+            _ComClass = loadedAssm.GetType(comInfo.ClassName);
         }
 
         private static string CurrentFolder(Assembly assm)
