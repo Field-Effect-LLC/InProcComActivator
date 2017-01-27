@@ -84,10 +84,6 @@ namespace ComActivator.Classes
             ppvObject = IntPtr.Zero;
 
             //Get Guid attribute
-            //CustomAttributeData attribData = typeof(ComClass).CustomAttributes
-            //    .Where<CustomAttributeData>((attr) => attr.AttributeType == typeof(GuidAttribute))
-            //    .FirstOrDefault<CustomAttributeData>();
-
             GuidAttribute guidAttr = (GuidAttribute)_ComClass.GetCustomAttribute(typeof(GuidAttribute), true);
 
             if (guidAttr == null)
@@ -124,7 +120,8 @@ namespace ComActivator.Classes
 
         private static void LoadAssembly(AppDomain domain, AssemblyName reqAssm, string path)
         {
-            bool isLoaded = domain.GetAssemblies().Any<Assembly>(i => i.FullName == reqAssm.FullName);
+            bool isLoaded = domain.GetAssemblies()
+                .Any<Assembly>(i => i.FullName == reqAssm.FullName);
 
             if (!isLoaded)
             {
@@ -140,7 +137,8 @@ namespace ComActivator.Classes
                     string assmName = String.Empty;
                     string assmExt = Path.GetExtension(reqAssm.Name.ToLower());
 
-                    if (!new[] { ".dll", ".resources" }.Any<string>((ext) => assmExt.Equals(ext, StringComparison.CurrentCultureIgnoreCase)))
+                    if (!new[] { ".dll", ".resources" }
+                        .Any<string>((ext) => assmExt.Equals(ext, StringComparison.CurrentCultureIgnoreCase)))
                     {
                         assmName = reqAssm.Name + ".dll";
                     }
