@@ -68,6 +68,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\ComInfo.cs" />
     <Compile Include="Helpers\COMHelper.cs" />
     <Compile Include="Exports.cs" />
     <Compile Include="Classes\ComClassFactory.cs" />
