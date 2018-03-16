@@ -13,10 +13,7 @@ namespace ComActivator.Classes
     [Serializable]
     public class ComClassFactory : MarshalByRefObject, IClassFactory
     {
-        private static object _ComObject = null;
-        private Guid _ClassId;
-        private string _CodeBase = String.Empty;
-        private string _ClassName = String.Empty;
+        //private static object _ComObject = null;
         private string _BasePath = String.Empty;
         Type _ComClass;
 
@@ -25,12 +22,11 @@ namespace ComActivator.Classes
             
         }
 
-        public ComClassFactory(Guid rclsid)
+        public ComClassFactory(Guid rclsid, IntPtr hComObjAddress)
         {
             AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver;
             AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += AssemblyResolver;
 
-            this._ClassId = rclsid;
             Assembly loadedAssm = null;
 
             //We know the type being requested, because we have rclsid.
@@ -39,9 +35,23 @@ namespace ComActivator.Classes
 
             ComInfo comInfo = ComInfo.GetComInfoFromClsid(rclsid);
             loadedAssm = Assembly.LoadFile(comInfo.CodeBaseLocal);
-            _BasePath = Directory.GetParent(comInfo.CodeBaseLocal).FullName;
+            // _BasePath = Directory.GetParent(comInfo.CodeBaseLocal).FullName;
+            _BasePath = AppDomain.CurrentDomain.BaseDirectory;
             //LoadReferencedAssemblies(AppDomain.CurrentDomain, loadedAssm);
             _ComClass = loadedAssm.GetType(comInfo.ClassName);
+
+            //AppDomain.CurrentDomain.AssemblyResolve -= AssemblyResolver;
+            //AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve -= AssemblyResolver;
+            //System.Diagnostics.Debug.Assert(false, "Got _ComClass: \r\n" + _ComClass.ToString());
+
+            IntPtr pComAddr = Marshal.GetComInterfaceForObject(this, typeof(IClassFactory));
+
+            Marshal.WriteIntPtr(hComObjAddress, pComAddr);
+        }
+
+        public IClassFactory GetSelf()
+        {
+            return (IClassFactory)this;
         }
 
         private static string CurrentFolder(Assembly assm)
@@ -69,6 +79,16 @@ namespace ComActivator.Classes
             {
                 foundAssembly = Assembly.LoadFrom(potentialPath);
             }
+            else
+            {
+                //Check one level up
+                potentialPath = Path.Combine(_BasePath, "..", assmName.Name) + ".dll";
+                if (File.Exists(potentialPath))
+                    foundAssembly = Assembly.LoadFrom(potentialPath);
+            }
+
+            System.Diagnostics.Debug.Assert(foundAssembly != null, 
+                "*** ERROR ***\r\nAssembly NOT found!\r\n" + args.Name);
 
             //Either return the found assembly or null if we couldn't find.
             return foundAssembly;
@@ -76,26 +96,47 @@ namespace ComActivator.Classes
 
         public uint CreateInstance(IntPtr pUnkOuter, ref Guid riid, out IntPtr ppvObject)
         {
+           
             ppvObject = IntPtr.Zero;
 
+            if (pUnkOuter != IntPtr.Zero)
+                return ComHelper.CLASS_E_NOAGGREGATION;
+
             //Get Guid attribute
-            GuidAttribute guidAttr = (GuidAttribute)_ComClass.GetCustomAttribute(typeof(GuidAttribute), true);
+            //AARGH! This bug was hard to track down.  We can't use the GetCustomAttribute *extension*
+            //because there's a version mismatch.  A Windows 7 installation doesn't appear to have
+            //this implemented in mscorlib.dll, even though it appears to work on my dev machine.
+            //When deploying, it crashes.
+            //GuidAttribute guidAttr = (GuidAttribute)_ComClass.GetCustomAttribute(typeof(GuidAttribute), true);
+
+            // GuidAttribute.GetCustomAttribute()
+            //GuidAttribute guidAttr = (GuidAttribute)Attribute
+            //   .GetCustomAttribute(_ComClass.GetType(), typeof(GuidAttribute));      
+            //Guid guidAttr = _ComClass.GUID;
+
+            //Guid guidAttr = new Guid("C60E14E4-ED68-4EE2-9D85-80E3CD86A6A0");
+
+            Guid guidAttr = _ComClass.GUID;
 
             if (guidAttr == null)
                 return ComHelper.E_NOINTERFACE;
 
-            if (riid != new Guid(guidAttr.Value) &&
-                riid != new Guid(ComHelper.IID_IOleObject) &&
-                riid != new Guid(ComHelper.IID_IDispatch) &&
-                riid != new Guid(ComHelper.IID_IUnknown))
-                return ComHelper.E_NOINTERFACE;
+            if (!ComHelper.GuidIsIn(riid,
+                  guidAttr,
+                  ComHelper.IID_IUnknown,
+                  ComHelper.IID_IDispatch,
+                  ComHelper.IID_IOleObject))
+                    return ComHelper.E_NOINTERFACE;
+
+            System.Diagnostics.Debug.Assert(false, "CreateInstance!");
+
 
             //Instantiate the object with its default constructor
 
             ConstructorInfo defaultConstr = _ComClass
                 .GetConstructor(Type.EmptyTypes);
 
-            _ComObject = defaultConstr.Invoke(null);
+            object _ComObject = defaultConstr.Invoke(null);
 
             if (_ComObject == null)
                 return ComHelper.E_NOINTERFACE;

@@ -1,6 +1,6 @@
 ﻿# In Proc COM Activator
 
-The In Proc COM Activator acts as a proxy for instantiating .NET COM-visible objects.  Normally, `mscoree.dll` is used in the `InProcServer32` registry entry as a proxy for instantiating COM-visible objects.  However, `mscoree.dll` instantiates all .NET objects in the same process into the same `AppDomain`.  This can cause a clash between `AppDomain` properties and events, such as 
+The In Proc COM Activator acts as a proxy for instantiating .NET COM-visible objects.  Normally, `mscoree.dll` is used in the `InProcServer32` registry entry as a proxy for instantiating COM-visible objects.  However, `mscoree.dll` instantiates all .NET objects in the same process into the same `AppDomain`.  This can cause a clash between `AppDomain` properties and events, such as the `AssemblyResolve` event.
 
 ## Required Knowledge ##
 

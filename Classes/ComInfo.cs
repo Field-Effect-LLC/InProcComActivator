@@ -20,7 +20,7 @@ namespace ComActivator.Classes
 
         public string ClassName { get; private set; }
 
-        public string ClsId { get; private set; }
+        public Guid ClsId { get; private set; }
 
         public string AppDomain { get; private set; }
 
@@ -31,10 +31,14 @@ namespace ComActivator.Classes
             using (RegistryKey key = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Default))
             using (RegistryKey codeBaseKey = key.OpenSubKey(@"CLSID\" + clsId.ToString("B") + @"\InProcServer32"))
             {
-                result.CodeBaseUri = codeBaseKey.GetValue("CodeBase")?.ToString();
-                result.ClassName = codeBaseKey.GetValue("Class")?.ToString();
-                result.CodeBaseLocal = new Uri(result.CodeBaseUri).LocalPath;
-                result.AppDomain = codeBaseKey.GetValue("AppDomain")?.ToString();
+                if (codeBaseKey != null)
+                {
+                    result.ClsId = clsId;
+                    result.CodeBaseUri = codeBaseKey.GetValue("CodeBase")?.ToString();
+                    result.ClassName = codeBaseKey.GetValue("Class")?.ToString();
+                    result.CodeBaseLocal = new Uri(result.CodeBaseUri).LocalPath;
+                    result.AppDomain = codeBaseKey.GetValue("AppDomain")?.ToString();
+                }
                 return result;
             }
         }

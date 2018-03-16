@@ -1,4 +1,7 @@
-﻿namespace ComActivator.Helpers
+﻿using System;
+using System.Linq;
+
+namespace ComActivator.Helpers
 {
     class ComHelper
     {
@@ -42,5 +45,38 @@
         /// </summary>
         public const uint E_NOINTERFACE = unchecked((uint)0x80004002);
 
+        /// <summary>
+        /// Given an object, either string or Guid, return a Guid.
+        /// </summary>
+        /// <param name="guidObj">The object to convert</param>
+        /// <returns></returns>
+        private static Guid GuidFromObject(object guidObj)
+        {
+            Guid resultantGuid = Guid.Empty;
+            if (guidObj is String)
+            {
+                resultantGuid = new Guid((String)guidObj);
+            }
+            else if (guidObj is Guid)
+            {
+                resultantGuid = (Guid)guidObj;
+            }
+            return resultantGuid;
+        }
+
+        /// <summary>
+        /// Convenience method to compare a Guid against several other Guids.
+        /// </summary>
+        /// <param name="interfaceToTest">The Guid to compare (either string or Guid object)</param>
+        /// <param name="interfacesToCompare">The Guids to compare against (either strings or Guid objects)</param>
+        /// <returns></returns>
+        public static bool GuidIsIn(object interfaceToTest, params object[] interfacesToCompare)
+        {
+            Guid testGuidObj = GuidFromObject(interfaceToTest);
+
+            return interfacesToCompare
+                .Any<object>((interfaceGuid)=>
+                    testGuidObj == GuidFromObject(interfaceGuid));
+        }
     }
 }
