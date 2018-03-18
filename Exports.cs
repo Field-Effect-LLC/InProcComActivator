@@ -74,8 +74,8 @@ namespace ComActivator
         /// <param name="priid">Guid of the interface to return</param>
         /// <param name="ppv">Out pointer to the IClassFactory object which creates instances of the COM object.</param>
         /// <returns></returns>
-        [DllExport]
-        [LoaderOptimization(LoaderOptimization.MultiDomain)]
+        [DllExport(CallingConvention.StdCall, ExportName = "DllGetClassObject")]
+        //[LoaderOptimization(LoaderOptimization.MultiDomain)]
         public static IntPtr DllGetClassObject(IntPtr prclsid, IntPtr priid, out IntPtr ppv)
         {
             Guid rclsid = (Guid)Marshal.PtrToStructure(prclsid, typeof(Guid));
@@ -156,7 +156,7 @@ namespace ComActivator
             }
         }
 
-        [DllExport]
+        [DllExport(CallingConvention.StdCall, ExportName = "DllCanUnloadNow")]
         public static int DllCanUnloadNow()
         {
             appDomains.Clear();
