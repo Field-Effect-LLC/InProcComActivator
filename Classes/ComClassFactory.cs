@@ -24,8 +24,8 @@ namespace ComActivator.Classes
 
         public ComClassFactory(Guid rclsid, IntPtr hComObjAddress)
         {
-            AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver;
-            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += AssemblyResolver;
+            //AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver;
+            //AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += AssemblyResolver;
 
             Assembly loadedAssm = null;
 
