@@ -18,6 +18,7 @@ namespace ComActivator
 
         static Exports()
         {
+            /*
             using (Stream assmStr = Assembly.GetExecutingAssembly()
                 .GetManifestResourceStream("ComActivator.DllExport.dll"))
             using (BinaryReader binRdr = new BinaryReader(assmStr))
@@ -29,6 +30,7 @@ namespace ComActivator
 
                 var assm = Assembly.Load(rawAssm);
             }
+            */
         }
 
         private static string CurrentFolder()
