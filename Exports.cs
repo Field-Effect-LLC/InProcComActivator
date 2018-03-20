@@ -16,23 +16,6 @@ namespace ComActivator
         static Dictionary<string, AppDomain> appDomains = new Dictionary<string, AppDomain>();
         static object _ClassFactoryInstance;
 
-        static Exports()
-        {
-            /*
-            using (Stream assmStr = Assembly.GetExecutingAssembly()
-                .GetManifestResourceStream("ComActivator.DllExport.dll"))
-            using (BinaryReader binRdr = new BinaryReader(assmStr))
-            {
-                byte[] rawAssm = new byte[assmStr.Length];
-                int nRead = 0;
-
-                nRead = assmStr.Read(rawAssm, 0, (int)assmStr.Length);
-
-                var assm = Assembly.Load(rawAssm);
-            }
-            */
-        }
-
         private static string CurrentFolder()
         {
             return Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName;
@@ -97,8 +80,6 @@ namespace ComActivator
                 {
                     Type type = typeof(Classes.ComClassFactory);
 
-                    //AddressMarshaler objAddress = new AddressMarshaler();
-
                     //Pass a memory address to write to so we can marshal the COM interface.
                     IntPtr hComObjAddress = Marshal.AllocHGlobal(IntPtr.Size);
 
@@ -113,33 +94,11 @@ namespace ComActivator
                             null);
 
 
-                    /*
-                    //http://stackoverflow.com/a/2132939/864414
-                    object _FactoryInstance = NewAppDomain(comInfo).
-                        CreateInstanceFromAndUnwrap(
-                            Assembly.GetExecutingAssembly().Location,
-                            typeof(ComClassFactory).FullName
-                        );
-                   */
-
-
-                    ////Get the requested Guid
-                    //Guid requestedGuid = new Guid();
-                    //Marshal.PtrToStructure(priid, requestedGuid);
-
-                    ////Class factory is coming out
-                    //Guid newGuid = new Guid(ComHelper.IID_IClassFactory);
-                    //Marshal.PtrToStructure(priid, newGuid);
-
                     IntPtr comMarshalDirect = Marshal.GetComInterfaceForObject(_ClassFactoryInstance, typeof(IClassFactory));
                     IntPtr comObjectAddr = Marshal.ReadIntPtr(hComObjAddress);
 
                     //Call to DllClassObject is requesting IClassFactory.
                     ppv = comObjectAddr;
-
-                    //ppv = Marshal.UnsafeAddrOfPinnedArrayElement(new[]{ _FactoryInstance }, 0);
-                    //ppv = Marshal.GetIUnknownForObject(_FactoryInstance);
-                    //int refCount = Marshal.Release(ppv);
 
                     Marshal.FreeHGlobal(hComObjAddress);
 

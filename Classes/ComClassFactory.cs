@@ -17,16 +17,8 @@ namespace ComActivator.Classes
         private string _BasePath = String.Empty;
         Type _ComClass;
 
-        static ComClassFactory()
-        {
-            
-        }
-
         public ComClassFactory(Guid rclsid, IntPtr hComObjAddress)
         {
-            //AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolver;
-            //AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += AssemblyResolver;
-
             Assembly loadedAssm = null;
 
             //We know the type being requested, because we have rclsid.
@@ -35,14 +27,8 @@ namespace ComActivator.Classes
 
             ComInfo comInfo = ComInfo.GetComInfoFromClsid(rclsid);
             loadedAssm = Assembly.LoadFile(comInfo.CodeBaseLocal);
-            // _BasePath = Directory.GetParent(comInfo.CodeBaseLocal).FullName;
             _BasePath = AppDomain.CurrentDomain.BaseDirectory;
-            //LoadReferencedAssemblies(AppDomain.CurrentDomain, loadedAssm);
             _ComClass = loadedAssm.GetType(comInfo.ClassName);
-
-            //AppDomain.CurrentDomain.AssemblyResolve -= AssemblyResolver;
-            //AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve -= AssemblyResolver;
-            //System.Diagnostics.Debug.Assert(false, "Got _ComClass: \r\n" + _ComClass.ToString());
 
             IntPtr pComAddr = Marshal.GetComInterfaceForObject(this, typeof(IClassFactory));
 
@@ -59,41 +45,6 @@ namespace ComActivator.Classes
             return Directory.GetParent(assm.Location).FullName;
         }
 
-        private Assembly AssemblyResolver(object sender, ResolveEventArgs args)
-        {
-            Assembly foundAssembly = null;
-
-            //Is the assembly already loaded?
-            foundAssembly = AppDomain.CurrentDomain.GetAssemblies()
-                .Where<Assembly>((curAssm) => curAssm.FullName == args.Name)
-                .FirstOrDefault<Assembly>();
-
-            if (foundAssembly != null)
-                return foundAssembly;
-
-            AssemblyName assmName = new AssemblyName(args.Name);
-
-            string potentialPath = Path.Combine(_BasePath, assmName.Name) + ".dll";
-
-            if (File.Exists(potentialPath))
-            {
-                foundAssembly = Assembly.LoadFrom(potentialPath);
-            }
-            else
-            {
-                //Check one level up
-                potentialPath = Path.Combine(_BasePath, "..", assmName.Name) + ".dll";
-                if (File.Exists(potentialPath))
-                    foundAssembly = Assembly.LoadFrom(potentialPath);
-            }
-
-            System.Diagnostics.Debug.Assert(foundAssembly != null, 
-                "*** ERROR ***\r\nAssembly NOT found!\r\n" + args.Name);
-
-            //Either return the found assembly or null if we couldn't find.
-            return foundAssembly;
-        }
-
         public uint CreateInstance(IntPtr pUnkOuter, ref Guid riid, out IntPtr ppvObject)
         {
            
@@ -107,14 +58,6 @@ namespace ComActivator.Classes
             //because there's a version mismatch.  A Windows 7 installation doesn't appear to have
             //this implemented in mscorlib.dll, even though it appears to work on my dev machine.
             //When deploying, it crashes.
-            //GuidAttribute guidAttr = (GuidAttribute)_ComClass.GetCustomAttribute(typeof(GuidAttribute), true);
-
-            // GuidAttribute.GetCustomAttribute()
-            //GuidAttribute guidAttr = (GuidAttribute)Attribute
-            //   .GetCustomAttribute(_ComClass.GetType(), typeof(GuidAttribute));      
-            //Guid guidAttr = _ComClass.GUID;
-
-            //Guid guidAttr = new Guid("C60E14E4-ED68-4EE2-9D85-80E3CD86A6A0");
 
             Guid guidAttr = _ComClass.GUID;
 
@@ -128,11 +71,7 @@ namespace ComActivator.Classes
                   ComHelper.IID_IOleObject))
                     return ComHelper.E_NOINTERFACE;
 
-            System.Diagnostics.Debug.Assert(false, "CreateInstance!");
-
-
             //Instantiate the object with its default constructor
-
             ConstructorInfo defaultConstr = _ComClass
                 .GetConstructor(Type.EmptyTypes);
 
@@ -152,45 +91,6 @@ namespace ComActivator.Classes
         public uint LockServer(bool fLock)
         {
             return 0; //S_OK
-        }
-
-        private static void LoadAssembly(AppDomain domain, AssemblyName reqAssm, string path)
-        {
-            bool isLoaded = domain.GetAssemblies()
-                .Any<Assembly>(i => i.FullName == reqAssm.FullName);
-
-            if (!isLoaded)
-            {
-                Assembly curAssm = null;
-                try
-                {
-                    //Load from the GAC
-                    curAssm = domain.Load(reqAssm);
-                }
-                catch
-                {
-                    //Not found in the GAC
-                    string assmName = String.Empty;
-                    string assmExt = Path.GetExtension(reqAssm.Name.ToLower());
-
-                    if (!new[] { ".dll", ".resources" }
-                        .Any<string>((ext) => assmExt.Equals(ext, StringComparison.CurrentCultureIgnoreCase)))
-                    {
-                        assmName = reqAssm.Name + ".dll";
-                    }
-                    var curPath = path;
-                    var rawAssembly = File.ReadAllBytes(Path.Combine(curPath, assmName));
-                    curAssm = domain.Load(rawAssembly);
-                }
-            }
-        }
-
-        private static void LoadReferencedAssemblies(AppDomain domain, Assembly assm)
-        {
-            foreach (var reqAssm in assm.GetReferencedAssemblies())
-            {
-                LoadAssembly(domain, reqAssm, Directory.GetParent(assm.Location).FullName);
-            }
         }
     }
 }
