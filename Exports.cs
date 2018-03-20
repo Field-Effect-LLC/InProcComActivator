@@ -159,8 +159,12 @@ namespace ComActivator
         [DllExport(CallingConvention.StdCall, ExportName = "DllCanUnloadNow")]
         public static int DllCanUnloadNow()
         {
-            appDomains.Clear();
             GC.KeepAlive(_ClassFactoryInstance);
+            foreach (var appDomain in appDomains)
+            {
+                AppDomain.Unload(appDomain.Value);
+            }
+            appDomains.Clear();
             return 0; //S_OK
         }
     }
