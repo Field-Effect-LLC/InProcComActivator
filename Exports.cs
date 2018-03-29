@@ -79,10 +79,10 @@ namespace ComActivator
                         ComHelper.IID_IOleObject))
                 {
                     Type type = typeof(Classes.ComClassFactory);
-
+                    
                     //Pass a memory address to write to so we can marshal the COM interface.
                     IntPtr hComObjAddress = Marshal.AllocHGlobal(IntPtr.Size);
-
+                    
                     _ClassFactoryInstance = NewAppDomain(comInfo).CreateInstanceFromAndUnwrap(
                             type.Assembly.Location,  //Changed from type.Assembly.FullName - specify path instead of class name
                             type.FullName,
@@ -121,7 +121,7 @@ namespace ComActivator
             GC.KeepAlive(_ClassFactoryInstance);
             foreach (var appDomain in appDomains)
             {
-                AppDomain.Unload(appDomain.Value);
+                //AppDomain.Unload(appDomain.Value);
             }
             appDomains.Clear();
             return 0; //S_OK
